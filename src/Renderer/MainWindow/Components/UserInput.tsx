@@ -23,7 +23,7 @@ export const UserInput: FC<Props> = ({ onSearchTermChanged, onNavigate, onEnterP
         onSearchTermChanged(updatedSearchTerm ?? "");
     };
 
-    const onKeyUp = async (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const onKeyDown = async (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (event.key === "ArrowUp" || event.key === "ArrowDown") {
             onNavigate(navigationDirectionMap[event.key]);
         } else if (event.key === "Enter") {
@@ -43,7 +43,7 @@ export const UserInput: FC<Props> = ({ onSearchTermChanged, onNavigate, onEnterP
             size="large"
             value={searchTerm}
             onChange={(_, { value }) => onSearchTermChange(value)}
-            onKeyUp={onKeyUp}
+            onKeyDown={onKeyDown}
             style={{ width: "100%" }}
         />
     );
