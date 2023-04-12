@@ -1,7 +1,6 @@
 import { createHash } from "crypto";
 import { join, normalize } from "path";
 import { MacOsApplication } from "./MacOsApplication";
-import { app } from "electron";
 import { FileSystemUtility } from "../../Utility/FileSystemUtility";
 import { ExecutionContext } from "../../../Common/ExecutionContext";
 import { SearchPlugin } from "../SearchPlugin";
@@ -11,6 +10,8 @@ import { SearchPluginUtility } from "../SearchPluginUtility";
 
 export class MacOsApplicationSearchPlugin implements SearchPlugin {
     protected readonly defaultSettings: Record<string, unknown> = {};
+
+    private readonly applicationFolders = ["/System/Applications/", "/Applications/"];
     private applications: MacOsApplication[] = [];
 
     public constructor(private readonly executionContext: ExecutionContext) {}
@@ -21,11 +22,11 @@ export class MacOsApplicationSearchPlugin implements SearchPlugin {
 
     public async rescan(): Promise<void> {
         await SearchPluginUtility.ensurePluginFolderExists(this);
-        const filePaths = await this.retrieveAllApplicationFilePaths();
-        await this.generateMacAppIcons(filePaths);
+        const appFilePaths = await this.retrieveAllApplicationFilePaths();
+        await this.generateMacAppIcons(appFilePaths);
 
-        this.applications = filePaths.map(
-            (filePath) => new MacOsApplication(filePath, this.getApplicationIconFilePath(filePath))
+        this.applications = appFilePaths.map(
+            (appFilePath) => new MacOsApplication(appFilePath, this.getApplicationIconFilePath(appFilePath))
         );
     }
 
@@ -38,23 +39,33 @@ export class MacOsApplicationSearchPlugin implements SearchPlugin {
     }
 
     private async generateMacAppIcons(filePaths: string[]): Promise<void> {
-        await Promise.all(filePaths.map((filePath) => this.generateMacAppIcon(filePath)));
+        await Promise.allSettled(filePaths.map((filePath) => this.generateMacAppIcon(filePath)));
     }
 
-    private async generateMacAppIcon(filePath: string): Promise<void> {
-        const outPngFilePath = this.getApplicationIconFilePath(filePath);
-        const fileExists = await FileSystemUtility.pathExists(outPngFilePath);
+    private async generateMacAppIcon(appFilePath: string): Promise<void> {
+        const pngFilePath = this.getApplicationIconFilePath(appFilePath);
 
-        if (fileExists) {
+        if (await FileSystemUtility.pathExists(pngFilePath)) {
             return;
         }
 
-        const image = await app.getFileIcon(filePath);
-        await FileSystemUtility.writePng(image.toPNG(), outPngFilePath);
+        const relativeIcnsFilePath = (
+            await CommandlineUtility.executeCommandWithOutput(
+                `defaults read "${join(appFilePath, "Contents", "Info.plist")}" CFBundleIconFile`
+            )
+        ).trim();
+
+        const potentialIcnsFilePath = join(appFilePath, "Contents", "Resources", relativeIcnsFilePath);
+
+        const icnsIconFilePath = potentialIcnsFilePath.endsWith(".icns")
+            ? potentialIcnsFilePath
+            : `${potentialIcnsFilePath}.icns`;
+
+        await CommandlineUtility.executeCommand(`sips -s format png "${icnsIconFilePath}" -o "${pngFilePath}"`);
     }
 
     private getApplicationIconFilePath(applicationFilePath: string): string {
-        const hash = createHash("sha256").update(`${applicationFilePath}`).digest("hex");
+        const hash = createHash("sha256").update(`${applicationFilePath}`).digest("hex").slice(0, 16);
         return `${join(this.getTemporaryFolderPath(), hash)}.png`;
     }
 
@@ -63,11 +74,12 @@ export class MacOsApplicationSearchPlugin implements SearchPlugin {
     }
 
     private async retrieveAllApplicationFilePaths(): Promise<string[]> {
-        const output = await CommandlineUtility.executeCommandWithOutput("mdfind kind:apps");
-
-        return output
+        return (await CommandlineUtility.executeCommandWithOutput(`mdfind "kMDItemKind == 'Application'"`))
             .split("\n")
             .map((filePath) => normalize(filePath).trim())
+            .filter((filePath) =>
+                this.applicationFolders.some((applicationFolder) => filePath.startsWith(applicationFolder))
+            )
             .filter((filePath) => [".", ".."].indexOf(filePath) === -1);
     }
 }
