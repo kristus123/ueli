@@ -1,4 +1,4 @@
-import { Input } from "@fluentui/react-components";
+import { Input, Spinner } from "@fluentui/react-components";
 import { FC, KeyboardEvent, useRef, useState } from "react";
 import { IpcChannel } from "../../../Common/IpcChannel";
 import { NavigationDirection } from "../SearchResultListUtility";
@@ -17,6 +17,7 @@ type Props = {
 export const UserInput: FC<Props> = ({ onSearchTermChanged, onNavigate, onEnterPressed }) => {
     const userInputRef = useRef<HTMLInputElement>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
+    const [rescanIsRunning, setRescanIsRunning] = useState<boolean>(false);
 
     const onSearchTermChange = (updatedSearchTerm: string): void => {
         setSearchTerm(updatedSearchTerm);
@@ -36,15 +37,23 @@ export const UserInput: FC<Props> = ({ onSearchTermChanged, onNavigate, onEnterP
         userInputRef?.current?.select();
     });
 
+    window.Bridge.ipcRenderer.on(IpcChannel.RescanStarted, () => setRescanIsRunning(true));
+    window.Bridge.ipcRenderer.on(IpcChannel.RescanFinished, () => setRescanIsRunning(false));
+
     return (
-        <Input
-            ref={userInputRef}
-            appearance="underline"
-            size="large"
-            value={searchTerm}
-            onChange={(_, { value }) => onSearchTermChange(value)}
-            onKeyDown={onKeyDown}
-            style={{ width: "100%" }}
-        />
+        <div style={{ position: "relative" }}>
+            <Input
+                ref={userInputRef}
+                appearance="underline"
+                size="large"
+                value={searchTerm}
+                onChange={(_, { value }) => onSearchTermChange(value)}
+                onKeyDown={onKeyDown}
+                style={{ width: "100%" }}
+            />
+            <div style={{ position: "absolute", top: 9, right: 8, display: rescanIsRunning ? "block" : "none" }}>
+                <Spinner size="tiny" />
+            </div>
+        </div>
     );
 };

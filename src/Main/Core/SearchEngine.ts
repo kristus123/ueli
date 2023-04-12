@@ -17,10 +17,6 @@ export class SearchEngine {
         private readonly logger: Logger
     ) {}
 
-    public async start(): Promise<void> {
-        await this.rescan();
-    }
-
     public search(searchTerm: string): SearchResultItem[] {
         if (SearchEngine.isEmptySearchTerm(searchTerm)) {
             return [];

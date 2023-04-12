@@ -57,21 +57,11 @@ describe(SearchEngine, () => {
 
     afterEach(async () => await FileSystemUtility.deleteFolderRecursively(tempFolderPath));
 
-    describe(SearchEngine.prototype.start, () => {
-        it("should trigger a rescan", async () => {
-            const searchEngine = new SearchEngine(searchEngineSettings, [searchPlugin.object()], logger.object());
-            await searchEngine.start();
-
-            verifyLoggerLoggedInfo("Starting rescan", Times.Once());
-            verifyLoggerLoggedInfo("Successfully rescanned", Times.Once());
-        });
-    });
-
     describe(SearchEngine.prototype.search, () => {
         it("should return an empty array if the search term is an empty string", async () => {
             const searchEngine = new SearchEngine(searchEngineSettings, [searchPlugin.object()], logger.object());
 
-            await searchEngine.start();
+            await searchEngine.rescan();
             const actual = searchEngine.search("");
 
             expect(actual.length).toBe(0);
@@ -81,7 +71,7 @@ describe(SearchEngine, () => {
         it("should return all items that match the search term", async () => {
             const searchEngine = new SearchEngine(searchEngineSettings, [searchPlugin.object()], logger.object());
 
-            await searchEngine.start();
+            await searchEngine.rescan();
             const actual = searchEngine.search("Search Result Item");
 
             expect(actual).toEqual(searchables.map((searchable) => searchable.toSearchResultItem()));
@@ -91,7 +81,7 @@ describe(SearchEngine, () => {
         it("should be case insensitive", async () => {
             const searchEngine = new SearchEngine(searchEngineSettings, [searchPlugin.object()], logger.object());
 
-            await searchEngine.start();
+            await searchEngine.rescan();
             const actual = searchEngine.search("search result item");
 
             expect(actual).toEqual(searchables.map((searchable) => searchable.toSearchResultItem()));
@@ -101,7 +91,7 @@ describe(SearchEngine, () => {
         it("should return an empty array if the search term does not match any of the items", async () => {
             const searchEngine = new SearchEngine(searchEngineSettings, [searchPlugin.object()], logger.object());
 
-            await searchEngine.start();
+            await searchEngine.rescan();
             const actual = searchEngine.search("whatever");
 
             expect(actual).toEqual([]);
@@ -119,7 +109,7 @@ describe(SearchEngine, () => {
                 logger.object()
             );
 
-            await searchEngine.start();
+            await searchEngine.rescan();
             const actual = searchEngine.search("srch rslt");
 
             expect(actual).toEqual(searchables.map((searchable) => searchable.toSearchResultItem()));
@@ -137,7 +127,7 @@ describe(SearchEngine, () => {
                 logger.object()
             );
 
-            await searchEngine.start();
+            await searchEngine.rescan();
             const actual = searchEngine.search("srch rslt");
 
             expect(actual).toEqual([]);

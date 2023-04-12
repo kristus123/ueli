@@ -6,6 +6,8 @@ export enum IpcChannel {
     GetSettings = "GetSettings",
     MainWindowShown = "MainWindowShown",
     OpenLocation = "OpenLocation",
+    RescanFinished = "RescanFinished",
+    RescanStarted = "RescanStarted",
     Search = "Search",
     SettingsUpdated = "SettingsUpdated",
     TrayIconEvent = "TrayIconEvent",

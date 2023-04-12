@@ -44,7 +44,7 @@ export class MainApplication {
         this.createTrayIcon();
         await this.windowManager.createMainWindow();
         this.registerGlobalKeyEventListeners();
-        await this.searchEngine.start();
+        await this.searchEngine.rescan();
     }
 
     private async quitApp(): Promise<void> {
@@ -132,7 +132,9 @@ export class MainApplication {
     }
 
     private async rescan(): Promise<void> {
+        this.windowManager.sendMessageToAllWindows(IpcChannel.RescanStarted);
         await this.searchEngine.rescan();
+        this.windowManager.sendMessageToAllWindows(IpcChannel.RescanFinished);
     }
 
     private async clearCaches(): Promise<void> {
