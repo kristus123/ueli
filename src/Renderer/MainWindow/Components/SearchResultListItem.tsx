@@ -46,7 +46,7 @@ export const SearchResultListItem: FC<Props> = ({
             onClick={onClick}
             onDoubleClick={onDoubleClick}
         >
-            <div>
+            <div style={{ height: "48px", width: "48px", display: "flex", padding: "4px", boxSizing: "border-box" }}>
                 <SearchResultListItemIcon icon={searchResultItem.icon} />
             </div>
             <div style={{ paddingLeft: 8, paddingRight: 8 }}>
