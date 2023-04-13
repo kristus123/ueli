@@ -3,6 +3,7 @@ import { FC, useEffect, useRef } from "react";
 import { SearchResultItem } from "../../../Common/SearchResult/SearchResultItem";
 import { ColorThemeName, getTheme } from "../../ColorThemes";
 import { SearchResultListItemIcon } from "./SearchResultListItemIcon";
+import { isVisibleInViewport } from "../Helpers";
 
 type Props = {
     searchResultItem: SearchResultItem;
@@ -22,13 +23,13 @@ export const SearchResultListItem: FC<Props> = ({
     const elementRef = useRef<HTMLDivElement>(null);
     const colorTheme = getTheme(colorThemeName);
 
-    const scrollIntoViewIfSelected = () => {
-        if (selected) {
-            elementRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollIntoViewIfSelectedAndNotVisible = () => {
+        if (selected && elementRef.current && !isVisibleInViewport(elementRef.current)) {
+            elementRef.current.scrollIntoView({ behavior: "smooth" });
         }
     };
 
-    useEffect(() => scrollIntoViewIfSelected(), [selected]);
+    useEffect(() => scrollIntoViewIfSelectedAndNotVisible(), [selected]);
 
     return (
         <div
