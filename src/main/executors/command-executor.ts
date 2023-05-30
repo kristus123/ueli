@@ -1,12 +1,16 @@
 import { exec, spawn } from "child_process";
 
 export function executeCommand(command: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        executeCommandWithOutput(command)
-            .then(() => resolve())
-            .catch((err) => reject(err));
+    new Promise((reject) => {
+      exec(command, (error) => {
+        if (error) {
+          reject(error);
+        }
+      });
     });
-}
+
+    return Promise.resolve()
+  }
 
 export function executeCommandWithOutput(command: string): Promise<string> {
     return new Promise((resolve, reject) => {
